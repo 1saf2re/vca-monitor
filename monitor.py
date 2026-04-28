@@ -12,7 +12,7 @@ import os
 import time
 from datetime import datetime, timezone, timedelta
 
-LINE_NOTIFY_TOKEN = os.environ.get("LINE_NOTIFY_TOKEN", "")
+DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")
 
 # 1ジョブあたりのループ時間（秒）
 # GitHub Actions のタイムアウト6時間より十分短く、
@@ -48,20 +48,19 @@ def now_jst() -> str:
     return datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S JST")
 
 
-def send_line(message: str) -> None:
-    if not LINE_NOTIFY_TOKEN:
-        print(f"[LINE未設定] {message}")
+def send_discord(message: str) -> None:
+    if not DISCORD_WEBHOOK_URL:
+        print(f"[Discord未設定] {message}")
         return
     try:
         r = requests.post(
-            "https://notify-api.line.me/api/notify",
-            headers={"Authorization": f"Bearer {LINE_NOTIFY_TOKEN}"},
-            data={"message": message},
+            DISCORD_WEBHOOK_URL,
+            json={"content": message},
             timeout=10,
         )
-        print(f"[LINE送信] status={r.status_code}")
+        print(f"[Discord送信] status={r.status_code}")
     except Exception as e:
-        print(f"[LINEエラー] {e}")
+        print(f"[Discordエラー] {e}")
 
 
 def check(name: str, url: str) -> bool:
@@ -94,7 +93,7 @@ def run_once() -> bool:
         print(f"  {'🟢' if available else '🔴'} {name}")
         if available:
             found = True
-            send_line(
+            send_discord(
                 f"\n🚨【緊急】VCA在庫出現！\n"
                 f"「{name}」が購入できます！\n"
                 f"今すぐ👇\n{url}\n"
@@ -129,5 +128,24 @@ def main():
     print(f"\n[{now_jst()}] ジョブ終了（計{count}回チェック）")
 
 
+def test_notification():
+    """Discord通知の動作確認用テスト送信"""
+    print("テストモードで起動します...")
+    send_discord(
+        "✅【VCA監視テスト】
+"
+        "通知の動作確認です。
+"
+        "このメッセージが届いていれば設定は完璧です👍
+"
+        f"確認時刻: {now_jst()}"
+    )
+    print("テスト送信完了。Discordを確認してください。")
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+    if "--test" in sys.argv:
+        test_notification()
+    else:
+        main()
