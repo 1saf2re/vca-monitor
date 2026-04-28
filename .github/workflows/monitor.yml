@@ -1,0 +1,39 @@
+name: VCA在庫監視
+
+on:
+  schedule:
+    - cron: "0 23,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14 * * *"
+
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: "通知テスト（チェックを入れるとDiscordにテストメッセージを送信）"
+        type: boolean
+        default: false
+
+jobs:
+  check-stock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: ライブラリインストール
+        run: pip install requests beautifulsoup4
+
+      - name: 在庫チェック実行
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ "${{ github.event.inputs.test_mode }}" = "true" ]; then
+            python monitor.py --test
+          else
+            python monitor.py
+          fi
