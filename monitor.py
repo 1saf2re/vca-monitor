@@ -131,15 +131,8 @@ def main():
 def test_notification():
     """Discord通知の動作確認用テスト送信"""
     print("テストモードで起動します...")
-    send_discord(
-        "✅【VCA監視テスト】
-"
-        "通知の動作確認です。
-"
-        "このメッセージが届いていれば設定は完璧です👍
-"
-        f"確認時刻: {now_jst()}"
-    )
+    msg = "[VCA監視テスト] 通知の動作確認です。このメッセージが届いていれば設定は完璧です！ 確認時刻: " + now_jst()
+    send_discord(msg)
     print("テスト送信完了。Discordを確認してください。")
 
 
